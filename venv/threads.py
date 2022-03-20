@@ -53,9 +53,9 @@ class ConsumerThread (Thread):
         for columnname,columncontent in chunk.iterrows():                           #O(chunksize)
             data = columncontent[0] + columncontent[2] + columncontent[6]
             data2 = chunk.iloc[:, 0] + chunk.iloc[:, 2] + chunk.iloc[:, 6]
-            match1 = re.search(regex, columncontent[0])                    #O(n)
-            match2 = re.search(regex, columncontent[2])                     #O(n)
-            match3 = re.search(regex, columncontent[6])                     #O(n)
+            match1 = re.search(regex, columncontent[0])
+            match2 = re.search(regex, columncontent[2])
+            match3 = re.search(regex, columncontent[6])                    
 
             exist = chunk.loc[data2==data]            #O(chunksize)
             if(match1!=None or match2!=None or match3!=None):
