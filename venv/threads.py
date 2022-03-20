@@ -8,6 +8,8 @@ import time
 import csv
 import re
 from collections import defaultdict
+import timeit
+
 
 
 BUF_SIZE = 10
@@ -15,9 +17,9 @@ q = queue.Queue (BUF_SIZE)
 
 
 class ProducerThread (Thread):
-    def __init__(self, group=None, target=None, name=None,
+    def init(self, group=None, target=None, name=None,
                  args=(), kwargs=None, verbose=None):
-        super (ProducerThread, self).__init__ ()
+        super (ProducerThread, self).init ()
         self.target = target
         self.name = name
 
@@ -25,23 +27,26 @@ class ProducerThread (Thread):
 
 
         if not q.full ():
-            chunksize = 10 ** 5
-            with pd.read_csv("C:\ofile\\hussinn.csv", chunksize=chunksize, on_bad_lines="skip", nrows=200,
+            chunksize = 10000
+            start = timeit.default_timer()
+            with pd.read_csv("C:\ofile\\hussinn.csv", chunksize=chunksize, on_bad_lines="skip",
                              encoding="ISO-8859-1",
                              low_memory=False) as reader:                        #O(chunk size)
                 for chunk in reader:  #O(chunk size)
                     q.put (chunk)
-
+            stop = timeit.default_timer()
+            print("time read",stop - start)
 
 class ConsumerThread (Thread):
-    def __init__(self, group=None, target=None, name=None,
+    def init(self, group=None, target=None, name=None,
                  args=(), kwargs=None, verbose=None):
-        super (ConsumerThread, self).__init__ ()
+        super (ConsumerThread, self).init ()
         self.target = target
         self.name = name
         return
 
     def run(self):
+        start1=timeit.default_timer()
         badWords = pd.read_csv ("C:\ofile\\full.csv", na_values=" NaN", on_bad_lines="skip", encoding="ISO-8859-1",
                                 low_memory=False)                           #O(n)
         regex = re.compile ('|'.join (re.escape (x) for x in badWords["2 girls 1 cup"]),re.IGNORECASE)  #O(n)
@@ -51,11 +56,11 @@ class ConsumerThread (Thread):
         chunk = q.get ()
 
         for columnname,columncontent in chunk.iterrows():                           #O(chunksize)
-            data = columncontent[0] + columncontent[2] + columncontent[6]
+            data = str(columncontent[0]) + str(columncontent[2]) + str(columncontent[6])
             data2 = chunk.iloc[:, 0] + chunk.iloc[:, 2] + chunk.iloc[:, 6]
-            match1 = re.search(regex, columncontent[0])
-            match2 = re.search(regex, columncontent[2])
-            match3 = re.search(regex, columncontent[6])                    
+            match1 = re.search(regex, str(columncontent[0]))                  
+            match2 = re.search(regex, str(columncontent[2]))
+            match3 = re.search(regex, str(columncontent[6]))
 
             exist = chunk.loc[data2==data]            #O(chunksize)
             if(match1!=None or match2!=None or match3!=None):
@@ -70,8 +75,11 @@ class ConsumerThread (Thread):
                     Flag2 = False
                 else:
                     exist.to_csv('C:\ofile\\healty.csv', mode="a", header=False)
+
+        stop1=timeit.default_timer()
+        print("time write",stop1-start1)
 #O(chunksize)=O(n)
-    # if __name__ == '__main__':
+if name == 'main':
     p = ProducerThread (name='producer')
     c = ConsumerThread (name='consumer')
 
@@ -79,3 +87,4 @@ class ConsumerThread (Thread):
     time.sleep (2)
     c.start ()
     time.sleep (2)
+    stop = timeit.default_timer()
